@@ -1,5 +1,8 @@
 var $ = require('jquery');
 var joint = require('jointjs');
+SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
+      return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
+};
 var graph = new joint.dia.Graph;
 var paper = new joint.dia.Paper({
     el: $('#paper-connection-by-dropping')
@@ -8,6 +11,7 @@ var paper = new joint.dia.Paper({
     , gridSize: 1
     , model: graph
 });
+console.log(paper);
 var el1 = new joint.shapes.basic.Rect({
     position: {
         x: 50

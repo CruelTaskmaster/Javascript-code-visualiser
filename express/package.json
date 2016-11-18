@@ -5,10 +5,11 @@
   "scripts": {
     "start": "npm run build-bundle & npm run run-server",
     "run-server": "nodemon ./bin/www",
-    "build-bundle":"browserify public/javascripts/code.js > public/bundle.js"
+    "build-bundle": "browserify public/javascripts/code.js > public/bundle.js"
   },
   "dependencies": {
     "body-parser": "~1.15.2",
+    "browserify": "^13.1.1",
     "cookie-parser": "~1.4.3",
     "debug": "~2.2.0",
     "express": "~4.14.0",

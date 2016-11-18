@@ -3,16 +3,16 @@ html
   head
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
-    link(rel='stylesheet', href='/stylesheets/chunkfive-fontface.css')
   body
-    iframe(width='800', height='166', scrolling='no', frameborder='no', src= srcStr)
+    <pre src="bundle.js" style="height:100px"></pre>
+    #paper-connection-by-dropping.paper
     script(type='text/javascript' src='bundle.js')
-    a(href='/') connecting-by-dropping
-    #connecting-by-dropping.tutorial
+    
     header
       nav
     section#wrapper
         block content
+        a(href='/') connecting-by-dropping
         footer 
           section.css-table
             section.four-column
