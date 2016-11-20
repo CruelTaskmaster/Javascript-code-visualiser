@@ -29803,6 +29803,7 @@ return jQuery;
 
 },{}],56:[function(require,module,exports){
 var $ = require('jquery');
+var _ = require('lodash');
 var joint = require('jointjs');
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
       return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
@@ -29851,7 +29852,7 @@ paper.on('cell:pointerup', function (cellView, evt, x, y) {
     var elementBelow = graph.get('cells').find(function (cell) {
         if (cell instanceof joint.dia.Link) return false; // Not interested in links.
         if (cell.id === cellView.model.id) return false; // The same element as the dropped one.
-        if (cell.getBBox().containsPoint(g.point(x, y))) {
+        if (cell.getBBox().containsPoint(joint.g.point(x, y))) {
             return true;
         }
         return false;
@@ -29876,4 +29877,4 @@ paper.on('cell:pointerup', function (cellView, evt, x, y) {
         cellView.model.translate(-200, 0);
     }
 });
-},{"jointjs":52,"jquery":53}]},{},[56]);
+},{"jointjs":52,"jquery":53,"lodash":54}]},{},[56]);
