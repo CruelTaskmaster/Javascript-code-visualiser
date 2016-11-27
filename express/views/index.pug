@@ -1,5 +1,11 @@
 extends layout
-
-block content
-  h1= title
-  p Welcome to #{title}
+block content      
+    h1= title
+    p Welcome to #{title}
+    #paper-connection-by-dropping.paper   
+    script(type='text/javascript').
+        BuildJoint();
+    iframe(src='ace-iframe.html' width='50%' height='600' id='vim')
+    #output
+    input(type='button' onclick='output()' value='Display content')
+    
