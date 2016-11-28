@@ -4,8 +4,9 @@ block content
     p Welcome to #{title}
     #paper-connection-by-dropping.paper   
     script(type='text/javascript').
-        BuildJoint();
+        buildJoint();
     iframe(src='ace-iframe.html' width='50%' height='600' id='vim')
     #output
     input(type='button' onclick='output()' value='Display content')
+    input(type='button' onclick='buildJoint()' value='build content')
     

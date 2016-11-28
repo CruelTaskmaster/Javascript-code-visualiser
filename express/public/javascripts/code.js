@@ -1,44 +1,56 @@
-window.BuildJoint = function () {
-    var $ = require('jquery');
-    var _ = require('lodash');
-    var joint = require('jointjs');
-    var graph = new joint.dia.Graph;
-    var paper = new joint.dia.Paper({
+var $ = require('jquery');
+var _ = require('lodash');
+var joint = require('jointjs');
+
+var el1 = new joint.shapes.basic.Rect({
+    position: {
+        x: 50
+        , y: 50
+    }
+    , size: {
+        width: 100
+        , height: 40
+    }
+    , attrs: {
+        rect: {
+            'stroke-width': '5'
+            , 'stroke-opacity': .7
+            , stroke: 'black'
+            , rx: 3
+            , ry: 3
+            , fill: 'lightgray'
+            , 'fill-opacity': .5
+        }
+        , text: {
+            text: 'Drop me over B'
+            , 'font-size': 10
+            , style: {
+                'text-shadow': '1px 1px 1px lightgray'
+            }
+        }
+    }
+});
+var paper;
+var graph;
+window.buildJoint = function () {
+    if ((graph instanceof joint.dia.Graph) && (paper instanceof joint.dia.Paper)) {
+        graph.get("cells").forEach(
+            function(cell) {
+                paper.findViewByModel(cell).remove();
+            }
+        );
+        $('#paper-connection-by-dropping').empty();
+    }
+    graph = new joint.dia.Graph;
+    paper = new joint.dia.Paper({
         el: $('#paper-connection-by-dropping')
         , width: 650
         , height: 200
         , gridSize: 1
         , model: graph
     });
-    var el1 = new joint.shapes.basic.Rect({
-        position: {
-            x: 50
-            , y: 50
-        }
-        , size: {
-            width: 100
-            , height: 40
-        }
-        , attrs: {
-            rect: {
-                'stroke-width': '5'
-                , 'stroke-opacity': .7
-                , stroke: 'black'
-                , rx: 3
-                , ry: 3
-                , fill: 'lightgray'
-                , 'fill-opacity': .5
-            }
-            , text: {
-                text: 'Drop me over B'
-                , 'font-size': 10
-                , style: {
-                    'text-shadow': '1px 1px 1px lightgray'
-                }
-            }
-        }
-    });
     graph.addCells([el1, el1.clone().translate(200, 50).attr('text/text', 'B')]);
+    console.log(graph.getCells());
     // Here is the real deal. Listen on cell:pointerup and link to an element found below.
     paper.on('cell:pointerup', function (cellView, evt, x, y) {
         // Find the first element below that is not a link nor the dragged element itself.
@@ -67,7 +79,7 @@ window.BuildJoint = function () {
                 }
             }));
             // Move the element a bit to the side.
-            cellView.model.translate(-200, 0);
+            cellView.model.translate(200, 0);
         }
     });
 };
@@ -76,5 +88,6 @@ var css = require('../stylesheets/style.css');
 window.output = function printBoxContents() {
     var parser = document.getElementById("vim").contentWindow.editor;
     var outputString = parser.getValue();
+    console.log(esprima.parse(outputString));
     document.getElementById("output").innerHTML = JSON.stringify(esprima.parse(outputString), null, 2);
 }
