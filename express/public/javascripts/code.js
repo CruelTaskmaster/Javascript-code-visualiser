@@ -1,18 +1,21 @@
+'use strict'
+
 var $ = require('jquery');
 var _ = require('lodash');
 var joint = require('jointjs');
+var esprima = require('esprima');
+var css = require('../stylesheets/style.css');
 const JSONString = {
     "global": [
         {
-            "type": "name"
-            , "sublayer": [
+            "sublayer": [
                 {
                     "variable": [
                         {
-                            "name": "x"
+                            "name": "i"
                 }
                 , {
-                            "name": "y"
+                            "name": "j"
                 }
                             ]
         }
@@ -20,19 +23,46 @@ const JSONString = {
                     "function": [
                         {
                             "name": "setPoint"
-                            , "parameter": "x,y"
+                            , "parameter": "i,j"
                             , "return": "null"
                 }
                 , {
                             "name": "getPoint"
                             , "parameter": ""
-                            , "return": "x,y"
+                            , "return": "i,j"
+                }
+                            ]
+        }
+                    ]
+    }, {
+            "sublayer2": [
+                {
+                    "variable": [
+                        {
+                            "name": "k"
+                }
+                , {
+                            "name": "l"
+                }
+                            ]
+        }
+        , {
+                    "function": [
+                        {
+                            "name": "setPoint"
+                            , "parameter": "k,l"
+                            , "return": "null"
+                }
+                , {
+                            "name": "getPoint"
+                            , "parameter": ""
+                            , "return": "k,l"
                 }
                             ]
         }
                     ]
     }
-        , {
+        , , {
             "variable": [
                 {
                     "name": "x"
@@ -84,9 +114,30 @@ const JSONString = {
         }
                  ]
 };
+var generatedString = {};
 var paper;
 var graph;
 window.buildJoint = function () {
+    var outputString = esprima.parse(document.getElementById("vim").contentWindow.editor.getValue());
+    console.log(JSONString);
+    if (outputString.type == 'Program') {
+        _.forEach(outputString.body, function (value, key) {
+            console.log(key);
+            if (value.type == 'FunctionDeclaration') {
+                FillObject(generatedString.global, 'function', value.id.name);
+                console.log(generatedString);
+            }
+        });
+    }
+    function FillObject(targetCollection, valueName, value){
+        console.log(targetCollection);
+        if (targetCollection == null)
+            {
+                targetCollection = [];
+            }
+        targetCollection.push({valueName:[]});
+    };
+    const boxPadding = 0.05;
     var selectedDiv = $('#paper-connection-by-dropping');
     if ((graph instanceof joint.dia.Graph) && (paper instanceof joint.dia.Paper)) {
         graph.get("cells").forEach(function (cell) {
@@ -158,10 +209,11 @@ window.buildJoint = function () {
                 }
             }
         });
-        console.log(objectName, "before", capsuleBox.get('position'), capsuleBox.get('size'));
+        //console.log(objectName, "before", capsuleBox.get('position'), capsuleBox.get('size'));
         graph.addCells([capsuleBox]);
         var prevSize = 0;
         _.forEach(objectToProcess, function (value, key) {
+            //console.log(objectName, key, prevSize);
             var output;
             if (key == 'variable') {
                 capsuleBox.attr({
@@ -169,7 +221,7 @@ window.buildJoint = function () {
                         text: 'variable'
                     }
                 });
-                output = createVarContents(value);
+                output = createVarContents(value, px, py + prevSize);
             }
             else if (key == 'function') {
                 capsuleBox.attr({
@@ -177,11 +229,18 @@ window.buildJoint = function () {
                         text: 'function'
                     }
                 });
-                output = createFuncContents(value);
+                output = createFuncContents(value, px, py + prevSize);
             }
             else if (typeof value === 'object') {
                 output = indexContent(value, key, px, py, 0, prevSize);
-                prevSize = output.get('size').height;
+                if (_.isArray(output)) {
+                    for (var i = 0; i < output.length; ++i) {
+                        prevSize += output[i].get('size').height;
+                    }
+                }
+                else {
+                    prevSize += output.get('size').height;
+                }
             }
             else {
                 console.log("nothing ever happens");
@@ -199,53 +258,73 @@ window.buildJoint = function () {
                 graph.addCells(output);
             }
         });
-        capsuleBox.fitEmbeds({
-            padding: {
-                top: 40
-                , left: 15
-                , right: 10
-                , bottom: 10
-            }
-        });
-        capsuleBox.translate(prevX + prevX * 0.1, prevY + prevY * 0.1);
-        console.log(objectName, "after", capsuleBox.get('position'), capsuleBox.get('size'));
+        if (!isNaN(capsuleBox.attr('text/text'))) {
+            var boxCollection = [];
+            capsuleBox.getEmbeddedCells().forEach(function (value) {
+                console.log(value);
+                capsuleBox.unembed(value);
+                value.translate(prevX + prevX * boxPadding, prevY + prevY * boxPadding);
+                boxCollection.push(value);
+            });
+            graph.removeCells([capsuleBox]);
+            capsuleBox = boxCollection;
+        }
+        else {
+            capsuleBox.fitEmbeds({
+                padding: {
+                    top: 40
+                    , left: 15
+                    , right: 10
+                    , bottom: 10
+                }
+            });
+            capsuleBox.translate(prevX + prevX * boxPadding, prevY + prevY * boxPadding);
+            //console.log(capsuleBox.attr('text/text'), prevX * boxPadding, prevY * boxPadding);
+            //console.log(objectName, "after", capsuleBox.get('position'), capsuleBox.get('size'));
+        }
         return capsuleBox;
     };
     var prevSize = 0;
     _.forEach(JSONString, function (value, key) {
         var value = indexContent(value, key, 50, 50, prevSize, 50);
         prevSize = value.get('size').width;
-        prevSize = prevSize + prevSize * 0.1;
+        prevSize = prevSize + prevSize * boxPadding;
     })
 
-    function createVarContents(varObject) {
+    function createVarContents(varObject, dx, dy) {
         var nameTags = [];
         var i = 0;
+        var prevHeight = 0;
         _.forEach(varObject, function (value, key) {
-            nameTags.push(createContent(value.name, i));
+            var temp = createContent(value.name, dx, dy + (prevHeight + prevHeight / 5) * i);
+            prevHeight = temp.get('size').height;
+            nameTags.push(temp);
             ++i;
         })
         return nameTags;
     };
 
-    function createFuncContents(funcObject) {
+    function createFuncContents(funcObject, dx, dy) {
         var nameTags = [];
         var i = 0;
+        var prevHeight = 0;
         _.forEach(funcObject, function (value, key) {
-            nameTags.push(createContent(value.name + "(" + value.parameter + ")", i));
+            var temp = createContent(value.name + "(" + value.parameter + ")", dx, dy + (prevHeight + prevHeight / 5) * i);
+            prevHeight = temp.get('size').height;
+            nameTags.push(temp);
             ++i;
         })
         return nameTags;
     };
 
-    function createContent(chosenName, increment) {
+    function createContent(chosenName, dx, dy) {
         if (!(typeof chosenName == 'string' || chosenName instanceof String)) {
             throw new Error('Object passed is not a string.');
         }
         var contentBox = new joint.shapes.basic.Rect({
             position: {
-                x: 50
-                , y: 50 + increment * 50
+                x: dx
+                , y: dy
             }
             , size: {
                 width: 100
@@ -287,9 +366,7 @@ window.buildJoint = function () {
             cell.set('position', cell.previous('position'));
         });*/
 };
-var esprima = require('esprima');
-var css = require('../stylesheets/style.css');
-window.output = function printBoxContents() {
+window.outputContents = function printBoxContents() {
     var parser = document.getElementById("vim").contentWindow.editor;
     var outputString = parser.getValue();
     console.log(esprima.parse(outputString));
