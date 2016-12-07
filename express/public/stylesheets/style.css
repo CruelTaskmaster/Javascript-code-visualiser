@@ -1,0 +1,14 @@
+@import url("../../node_modules/jointjs/dist/joint.min.css");
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+a {
+  color: #00b7ff;
+}
+#paper-connection-by-dropping {
+  border-width: 2px;
+  border-style: solid;
+  width: 80%;
+  height: 1000px;
+}

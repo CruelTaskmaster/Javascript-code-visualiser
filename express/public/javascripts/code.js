@@ -120,22 +120,57 @@ var graph;
 window.buildJoint = function () {
     var outputString = esprima.parse(document.getElementById("vim").contentWindow.editor.getValue());
     console.log(JSONString);
+    generatedString = {};
     if (outputString.type == 'Program') {
         _.forEach(outputString.body, function (value, key) {
-            console.log(key);
+            //console.log(key);
             if (value.type == 'FunctionDeclaration') {
-                FillObject(generatedString.global, 'function', value.id.name);
-                console.log(generatedString);
+                var funcObj = {name:value.id.name};
+                var parameters = "";
+                for(var i = 0; i < value.params.length;++i){
+                    if (i > 0) {
+                        parameters += ",";
+                    }
+                    parameters += value.params[i].name;
+                }
+                funcObj['parameter'] = parameters;
+                FillObject(generatedString, 'function', funcObj);
+                //console.log(generatedString);
+            }
+            else if (value.type == 'VariableDeclaration') {
+                for(var i = 0; i < value.declarations.length;++i){
+                    FillObject(generatedString, 'variable', {name:value.declarations[i].id.name});
+                }
+                //console.log(generatedString);
             }
         });
     }
-    function FillObject(targetCollection, valueName, value){
-        console.log(targetCollection);
-        if (targetCollection == null)
-            {
-                targetCollection = [];
+    console.log(generatedString);
+    function FillObject(targetCollection, valueName, attributes){
+        //console.log(targetCollection);
+        var collectionObject = {};
+        collectionObject[valueName] = [attributes];
+        if (targetCollection['global'] == null) {
+            targetCollection['global'] = [];
+        }
+        var hasCollection;
+        for(var i = 0; i < targetCollection['global'].length;++i){
+            var keyArray = Object.keys(targetCollection['global'][i]);
+            for (var j = 0; j < keyArray.length;++j ){
+                console.log(keyArray[j]);
+                if (keyArray[j] == valueName) {
+                    hasCollection = targetCollection['global'][i][valueName];
+                    break;
+                }
             }
-        targetCollection.push({valueName:[]});
+            if (hasCollection != null){
+                hasCollection.push(attributes);
+                break;
+            }
+        }
+        if (hasCollection == null) {
+            targetCollection['global'].push(collectionObject);
+        }
     };
     const boxPadding = 0.05;
     var selectedDiv = $('#paper-connection-by-dropping');
@@ -261,7 +296,7 @@ window.buildJoint = function () {
         if (!isNaN(capsuleBox.attr('text/text'))) {
             var boxCollection = [];
             capsuleBox.getEmbeddedCells().forEach(function (value) {
-                console.log(value);
+                //console.log(value);
                 capsuleBox.unembed(value);
                 value.translate(prevX + prevX * boxPadding, prevY + prevY * boxPadding);
                 boxCollection.push(value);
@@ -285,7 +320,7 @@ window.buildJoint = function () {
         return capsuleBox;
     };
     var prevSize = 0;
-    _.forEach(JSONString, function (value, key) {
+    _.forEach(generatedString, function (value, key) {
         var value = indexContent(value, key, 50, 50, prevSize, 50);
         prevSize = value.get('size').width;
         prevSize = prevSize + prevSize * boxPadding;
