@@ -1,10 +1,14 @@
 'use strict'
 
+
+//Load node.js modules here
 var $ = require('jquery');
 var _ = require('lodash');
 var joint = require('jointjs');
 var esprima = require('esprima');
 var css = require('../stylesheets/style.css');
+
+//Test string for visualisation software
 const JSONString = {
     "global": [
         {
@@ -114,9 +118,16 @@ const JSONString = {
         }
                  ]
 };
+
+//Variable declrations
 var generatedString = {};
 var paper;
 var graph;
+
+/*
+    function for translating esprima json into usable jsonstring for visualisation software
+    the jsonstring is then used to generate the visualised diagram
+*/
 window.buildJoint = function () {
     var outputString = esprima.parse(document.getElementById("vim").contentWindow.editor.getValue());
     console.log(JSONString);
@@ -134,32 +145,32 @@ window.buildJoint = function () {
                     parameters += value.params[i].name;
                 }
                 funcObj['parameter'] = parameters;
-                FillObject(generatedString, 'function', funcObj);
+                FillObject(generatedString, 'function', funcObj, 'global');
                 //console.log(generatedString);
             }
             else if (value.type == 'VariableDeclaration') {
                 for(var i = 0; i < value.declarations.length;++i){
-                    FillObject(generatedString, 'variable', {name:value.declarations[i].id.name});
+                    FillObject(generatedString, 'variable', {name:value.declarations[i].id.name}, 'global');
                 }
                 //console.log(generatedString);
             }
         });
     }
     console.log(generatedString);
-    function FillObject(targetCollection, valueName, attributes){
+    function FillObject(targetCollection, valueName, attributes, namespace){
         //console.log(targetCollection);
         var collectionObject = {};
         collectionObject[valueName] = [attributes];
-        if (targetCollection['global'] == null) {
-            targetCollection['global'] = [];
+        if (targetCollection[namespace] == null) {
+            targetCollection[namespace] = [];
         }
         var hasCollection;
-        for(var i = 0; i < targetCollection['global'].length;++i){
-            var keyArray = Object.keys(targetCollection['global'][i]);
+        for(var i = 0; i < targetCollection[namespace].length;++i){
+            var keyArray = Object.keys(targetCollection[namespace][i]);
             for (var j = 0; j < keyArray.length;++j ){
                 console.log(keyArray[j]);
                 if (keyArray[j] == valueName) {
-                    hasCollection = targetCollection['global'][i][valueName];
+                    hasCollection = targetCollection[namespace][i][valueName];
                     break;
                 }
             }
@@ -169,10 +180,10 @@ window.buildJoint = function () {
             }
         }
         if (hasCollection == null) {
-            targetCollection['global'].push(collectionObject);
+            targetCollection[namespace].push(collectionObject);
         }
     };
-    const boxPadding = 0.05;
+    const boxPadding = 0.1;
     var selectedDiv = $('#paper-connection-by-dropping');
     if ((graph instanceof joint.dia.Graph) && (paper instanceof joint.dia.Paper)) {
         graph.get("cells").forEach(function (cell) {
@@ -331,7 +342,7 @@ window.buildJoint = function () {
         var i = 0;
         var prevHeight = 0;
         _.forEach(varObject, function (value, key) {
-            var temp = createContent(value.name, dx, dy + (prevHeight + prevHeight / 5) * i);
+            var temp = createContent(value.name, dx, dy + (prevHeight + 10) * i);
             prevHeight = temp.get('size').height;
             nameTags.push(temp);
             ++i;
@@ -344,7 +355,7 @@ window.buildJoint = function () {
         var i = 0;
         var prevHeight = 0;
         _.forEach(funcObject, function (value, key) {
-            var temp = createContent(value.name + "(" + value.parameter + ")", dx, dy + (prevHeight + prevHeight / 5) * i);
+            var temp = createContent(value.name + "(" + value.parameter + ")", dx, dy + (prevHeight + 10) * i);
             prevHeight = temp.get('size').height;
             nameTags.push(temp);
             ++i;
@@ -363,7 +374,7 @@ window.buildJoint = function () {
             }
             , size: {
                 width: 100
-                , height: 40
+                , height: 20
             }
             , attrs: {
                 rect: {
@@ -386,7 +397,7 @@ window.buildJoint = function () {
         });
         return contentBox;
     };
-    /*    graph.on('change:position', function (cell) {
+        graph.on('change:position', function (cell) {
             var parentId = cell.get('parent');
             if (!parentId) return;
             var parent = graph.getCell(parentId);
@@ -399,7 +410,7 @@ window.buildJoint = function () {
             }
             // Revert the child position.
             cell.set('position', cell.previous('position'));
-        });*/
+        });
 };
 window.outputContents = function printBoxContents() {
     var parser = document.getElementById("vim").contentWindow.editor;
