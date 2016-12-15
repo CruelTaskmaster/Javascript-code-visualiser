@@ -2,8 +2,11 @@ extends layout
 block content      
     h1= title
     p Welcome to #{title}
-    iframe(src='ace-iframe.html' width='100%' height='600' id='vim')
-    section#buttonholder
+    #block
+        #editor
+            iframe(src='ace-iframe.html' width='100%' height='100%' id='vim')
+        #paper-connection-by-dropping.paper
+    #buttonholder
         input(type='button' onclick='buildJoint()' value='build content')
-    #paper-connection-by-dropping.paper
+    
     
