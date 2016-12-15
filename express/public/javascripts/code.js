@@ -1,13 +1,10 @@
 'use strict'
-
-
 //Load node.js modules here
 var $ = require('jquery');
 var _ = require('lodash');
 var joint = require('jointjs');
 var esprima = require('esprima');
 var css = require('../stylesheets/style.css');
-
 //Test string for visualisation software
 const JSONString = {
     "global": [
@@ -118,27 +115,29 @@ const JSONString = {
         }
                  ]
 };
-
 //Variable declrations
 var generatedString = {};
 var paper;
 var graph;
-
 /*
     function for translating esprima json into usable jsonstring for visualisation software
     the jsonstring is then used to generate the visualised diagram
 */
 window.buildJoint = function () {
+    //This takes in the data obtained from analysing the code within the browser editor
     var outputString = esprima.parse(document.getElementById("vim").contentWindow.editor.getValue());
     console.log(JSONString);
     generatedString = {};
+    //Case checks for generating the custom JSON string
     if (outputString.type == 'Program') {
         _.forEach(outputString.body, function (value, key) {
             //console.log(key);
             if (value.type == 'FunctionDeclaration') {
-                var funcObj = {name:value.id.name};
+                var funcObj = {
+                    name: value.id.name
+                };
                 var parameters = "";
-                for(var i = 0; i < value.params.length;++i){
+                for (var i = 0; i < value.params.length; ++i) {
                     if (i > 0) {
                         parameters += ",";
                     }
@@ -149,15 +148,18 @@ window.buildJoint = function () {
                 //console.log(generatedString);
             }
             else if (value.type == 'VariableDeclaration') {
-                for(var i = 0; i < value.declarations.length;++i){
-                    FillObject(generatedString, 'variable', {name:value.declarations[i].id.name}, 'global');
+                for (var i = 0; i < value.declarations.length; ++i) {
+                    FillObject(generatedString, 'variable', {
+                        name: value.declarations[i].id.name
+                    }, 'global');
                 }
                 //console.log(generatedString);
             }
         });
     }
     console.log(generatedString);
-    function FillObject(targetCollection, valueName, attributes, namespace){
+    //Function used to generate the JSON values
+    function FillObject(targetCollection, valueName, attributes, namespace) {
         //console.log(targetCollection);
         var collectionObject = {};
         collectionObject[valueName] = [attributes];
@@ -165,16 +167,16 @@ window.buildJoint = function () {
             targetCollection[namespace] = [];
         }
         var hasCollection;
-        for(var i = 0; i < targetCollection[namespace].length;++i){
+        for (var i = 0; i < targetCollection[namespace].length; ++i) {
             var keyArray = Object.keys(targetCollection[namespace][i]);
-            for (var j = 0; j < keyArray.length;++j ){
+            for (var j = 0; j < keyArray.length; ++j) {
                 console.log(keyArray[j]);
                 if (keyArray[j] == valueName) {
                     hasCollection = targetCollection[namespace][i][valueName];
                     break;
                 }
             }
-            if (hasCollection != null){
+            if (hasCollection != null) {
                 hasCollection.push(attributes);
                 break;
             }
@@ -183,6 +185,9 @@ window.buildJoint = function () {
             targetCollection[namespace].push(collectionObject);
         }
     };
+    /*
+        Here is where the diagram is generated using JointJS
+    */
     const boxPadding = 0.1;
     var selectedDiv = $('#paper-connection-by-dropping');
     if ((graph instanceof joint.dia.Graph) && (paper instanceof joint.dia.Paper)) {
@@ -199,6 +204,7 @@ window.buildJoint = function () {
         , gridSize: 1
         , model: graph
     });
+    //Declaration for a custom JointJS shape
     var baseBox = joint.shapes.basic.Generic.extend({
         markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g>'
         , defaults: joint.util.deepSupplement({
@@ -225,7 +231,8 @@ window.buildJoint = function () {
             return false;
         }
     });
-
+    //Recursively goes through the custom JSON string and finds functions and variables
+    //Boxes are then created to represent the functions and variables
     function indexContent(objectToProcess, objectName, px, py, prevX, prevY) {
         var capsuleBox = new baseBox({
             position: {
@@ -397,25 +404,20 @@ window.buildJoint = function () {
         });
         return contentBox;
     };
-        graph.on('change:position', function (cell) {
-            var parentId = cell.get('parent');
-            if (!parentId) return;
-            var parent = graph.getCell(parentId);
-            var parentBbox = parent.getBBox();
-            var cellBbox = cell.getBBox();
-            if (parentBbox.containsPoint(cellBbox.origin()) && parentBbox.containsPoint(cellBbox.topRight()) && parentBbox.containsPoint(cellBbox.corner()) && parentBbox.containsPoint(cellBbox.bottomLeft())) {
-                // All the four corners of the child are inside
-                // the parent area.
-                return;
-            }
-            // Revert the child position.
-            cell.set('position', cell.previous('position'));
-        });
+    
+    //Code which restraints the boxes to stay within their parent boxes
+    graph.on('change:position', function (cell) {
+        var parentId = cell.get('parent');
+        if (!parentId) return;
+        var parent = graph.getCell(parentId);
+        var parentBbox = parent.getBBox();
+        var cellBbox = cell.getBBox();
+        if (parentBbox.containsPoint(cellBbox.origin()) && parentBbox.containsPoint(cellBbox.topRight()) && parentBbox.containsPoint(cellBbox.corner()) && parentBbox.containsPoint(cellBbox.bottomLeft())) {
+            // All the four corners of the child are inside
+            // the parent area.
+            return;
+        }
+        // Revert the child position.
+        cell.set('position', cell.previous('position'));
+    });
 };
-window.outputContents = function printBoxContents() {
-    var parser = document.getElementById("vim").contentWindow.editor;
-    var outputString = parser.getValue();
-    console.log(esprima.parse(outputString));
-    console.log(JSONString);
-    document.getElementById("output").innerHTML = JSON.stringify(esprima.parse(outputString), null, 2);
-}

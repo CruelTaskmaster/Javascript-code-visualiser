@@ -3,8 +3,7 @@ block content
     h1= title
     p Welcome to #{title}
     iframe(src='ace-iframe.html' width='100%' height='600' id='vim')
-    #output
-    input(type='button' onclick='outputContents()' value='Display content')
-    input(type='button' onclick='buildJoint()' value='build content')
+    section#buttonholder
+        input(type='button' onclick='buildJoint()' value='build content')
     #paper-connection-by-dropping.paper
     
